@@ -35,3 +35,15 @@ List<T>::~List()
 {
 	// [TODO] cleanup nodes
 }
+
+template<typename T>
+void List<T>::push_front(const List<T>& rhs)
+{
+	// when passed an lvalue list, this should be called
+}
+
+template<typename T>
+void List<T>::push_front(List<T> rhs)
+{
+	// when passed an rvalue list, this should be called
+}

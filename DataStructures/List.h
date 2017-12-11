@@ -7,6 +7,8 @@
 
 // [TODO] handle custom allocator
 // [TODO] handle generic iteration
+// ? I vaguely recall something about wanting to put template impl in header
+//	for reasons around how the code is generated.
 template<typename T>
 class List
 {
@@ -28,10 +30,10 @@ public:
   // [TODO] ? move semantics/copy swap?
   ~List();
   
-  //// List modifying operations
-  //void push_front(const List<T>& rhs);
-  //void push_front(List<T> rhs);
-  //
+  // List modifying operations
+  void push_front(const List<T>& rhs);
+  void push_front(List<T> rhs);
+  
   //void push_back(const List<T>& rhs);
   //void push_back(List<T> rhs);
   //
