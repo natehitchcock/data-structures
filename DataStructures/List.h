@@ -31,13 +31,19 @@ class List
 	Node<T>* ptail;
 
 public:
-	List() :
+    /***
+     * Default ctor
+     */
+    List() :
 		phead(nullptr),
 		ptail(nullptr)
 	{
 
 	}
 
+    /***
+     * Initializer list ctor
+     */
 	List(std::initializer_list<T> args)
 	{
 		// ? Would it be faster/better to just hang on to the initializer list
@@ -49,6 +55,9 @@ public:
 		}
 	}
 
+    /***
+     * Copy ctor
+     */
 	List(const List<T>& rhs)
 	{
 		Node<T>* pcur = rhs.phead;
@@ -59,12 +68,18 @@ public:
 		}
 	}
 
+    /***
+     * Move ctor
+     */
 	List(List<T>&& rhs)
 	{
 		std::swap(phead, rhs.phead);
 		std::swap(ptail, rhs.ptail);
 	}
-	
+    
+    /***
+     * Dtor
+     */
 	~List()
 	{
 		// [TODO] replace with range-based for loop
@@ -81,7 +96,9 @@ public:
 		ptail = nullptr;
 	}
   
-	// List modifying operations
+	/***
+     * Copies a value and adds it to the front of the list
+     */
 	void push_front(const T& element)
 	{
 		Node<T>* oldHead = phead;
@@ -102,6 +119,9 @@ public:
 		phead = newNode;
 	}
   
+    /***
+     * Copies a value and adds it to the end of the list
+     */
 	void push_back(const T& element)
 	{
 		Node<T>* oldTail = ptail;
