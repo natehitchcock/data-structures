@@ -5,6 +5,7 @@
 .vs/
 .vscode/
 */Debug/
+*/ipch/
 
 # Compiled Object files
 *.slo
