@@ -1,6 +1,11 @@
 # Prerequisites
 *.d
 
+# generated directores
+.vs/
+.vscode/
+*/Debug/
+
 # Compiled Object files
 *.slo
 *.lo
