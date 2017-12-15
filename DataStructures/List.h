@@ -9,6 +9,7 @@
 // [TODO] handle generic iteration
 // [TODO] evaluate using smart pointers instead of raw pointers
 // [TODO] support for range-based for loop!
+// [TODO] replace size type with template parameter to allow for larger sizes
 template<typename T>
 class List
 {
@@ -16,27 +17,29 @@ class List
 	struct Node
 	{
 		U* value;
-		Node<U>* pnext;
-		Node<U>* pprev;
+		Node<U>* next;
+		Node<U>* prev;
 		Node() :
-			pnext(nullptr),
-			pprev(nullptr),
+			next(nullptr),
+			prev(nullptr),
 			value(nullptr)
 		{
 
 		}
 	};
 
-	Node<T>* phead;
-	Node<T>* ptail;
+	Node<T>* head;
+	Node<T>* tail;
+	int size;
 
 public:
     /***
      * Default ctor
      */
     List() :
-		phead(nullptr),
-		ptail(nullptr)
+		head(nullptr),
+		tail(nullptr),
+		size(0) // ? would size be 0 initialized in all cases, without this?
 	{
 
 	}
@@ -49,10 +52,14 @@ public:
 		// ? Would it be faster/better to just hang on to the initializer list
 		//	until we need to modify it? (copy on write)
 		// ? How does std::vector init from the initializer list?
+		// ? How should we handle exceptions here?
+		// ? are initializer lists rvalues when passed in with the new syntax? maybe not relevant, but interesting
 		for (auto& e : args)
 		{
-			push_back(e);
+			PushBack(e);
 		}
+
+		size = args.size();
 	}
 
     /***
@@ -60,12 +67,14 @@ public:
      */
 	List(const List<T>& rhs)
 	{
-		Node<T>* pcur = rhs.phead;
+		// ? what happens if we throw an exception (like OOM) in here
+		Node<T>* pcur = rhs.head;
 		while (pcur != nullptr)
 		{
-			push_back(*(pcur->value));
-			pcur = pcur->pnext;
+			PushBack(*(pcur->value));
+			pcur = pcur->next;
 		}
+		size = rhs.size;
 	}
 
     /***
@@ -73,8 +82,9 @@ public:
      */
 	List(List<T>&& rhs)
 	{
-		std::swap(phead, rhs.phead);
-		std::swap(ptail, rhs.ptail);
+		std::swap(head, rhs.head);
+		std::swap(tail, rhs.tail);
+		size = rhs.size;
 	}
     
     /***
@@ -83,63 +93,74 @@ public:
 	~List()
 	{
 		// [TODO] replace with range-based for loop
-		Node<T>* pcur = phead;
+		Node<T>* pcur = head;
 		while (pcur != nullptr)
 		{
-			Node<T>* pnext = pcur->pnext;
+			Node<T>* pnext = pcur->next;
 			delete pcur->value;
 			delete pcur;
 			pcur = pnext;
 		}
 
-		phead = nullptr;
-		ptail = nullptr;
+		head = nullptr;
+		tail = nullptr;
+	}
+
+	int Size() 
+	{
+		return size;
 	}
   
 	/***
      * Copies a value and adds it to the front of the list
      */
-	void push_front(const T& element)
+	void PushFront(const T& element)
 	{
-		Node<T>* oldHead = phead;
+		Node<T>* oldHead = head;
 
 		Node<T>* newNode = new Node<T>();
 		newNode->value = new T(element);
-		newNode->pnext = oldHead;
+		newNode->next = oldHead;
 
 		if (oldHead != nullptr)
 		{
-			oldHead->pprev = newNode;
+			oldHead->prev = newNode;
 		} 
 		else
 		{
-			ptail = newNode;
+			tail = newNode;
 		}
 
-		phead = newNode;
+		head = newNode;
+		++size;
 	}
   
     /***
      * Copies a value and adds it to the end of the list
      */
-	void push_back(const T& element)
+	void PushBack(const T& element)
 	{
-		Node<T>* oldTail = ptail;
+		// ? maybe this could be re-written as node operations and nodes could
+		//	have a prepend/postpend operation?
+		//	might not help reduce this code size, but could be useful
+		//  in the future.
+		Node<T>* oldTail = tail;
 
 		Node<T>* newNode = new Node<T>();
 		newNode->value = new T(element);
-		newNode->pprev = oldTail;
+		newNode->prev = oldTail;
 
 		if (oldTail != nullptr)
 		{
-			oldTail->pnext = newNode;
+			oldTail->next = newNode;
 		}
 		else
 		{
-			phead = newNode;
+			head = newNode;
 		}
 
-		ptail = newNode;
+		tail = newNode;
+		++size;
 	}
 
 	//T pop_front();
