@@ -1,11 +1,14 @@
 # Prerequisites
 *.d
 
-# generated directores
+# Generated directores
 .vs/
 .vscode/
 */Debug/
 */ipch/
+
+# Generated database files
+*.sdf
 
 # Compiled Object files
 *.slo
@@ -31,6 +34,10 @@
 *.la
 *.a
 *.lib
+lib/
+
+# Third party header files
+inc/
 
 # Executables
 *.exe
