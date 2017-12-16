@@ -173,10 +173,10 @@ public:
 	/***
 	* Copies a list and adds it to the front of the list
 	*/
-	void PushFront(const List<T>&& other)
+	void PushFront(List<T>&& other)
 	{
 		// If the other list is empty, just bailout
-		if (other->tail == nullptr)
+		if (other.tail == nullptr)
 			return;
 
 		if (head == nullptr)
@@ -242,10 +242,10 @@ public:
 	/***
 	* Moves a list to the end of the list
 	*/
-	void PushBack(const List<T>&& other)
+	void PushBack(List<T>&& other)
 	{
 		// If other list is empty, bailout
-		if (other->head == nullptr)
+		if (other.head == nullptr)
 			return;
 
 		if (tail == nullptr)
