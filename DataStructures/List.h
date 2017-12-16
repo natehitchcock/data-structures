@@ -9,6 +9,7 @@
 // [TODO] handle generic iteration
 // [TODO] evaluate using smart pointers instead of raw pointers
 // [TODO] support for range-based for loop!
+// [TODO] const correctness pass
 template<typename T, typename SizeT = int>
 class List
 {
@@ -104,22 +105,58 @@ public:
 		head = nullptr;
 		tail = nullptr;
 	}
-
-	SizeT Size()
-	{
-		return size;
-	}
 	
+	// [TODO] alias away List<T> to avoid defaulting SizeT on passed back types
+	// [TODO] replace copy/move ctor with perfect-forwarded ctor that uses
+	//	the assigment operator
+	/***
+	 * Assignment operator for lvalue refs
+	 */
+	List<T> operator=(const List<T>& rhs)
+	{
+		Node<T>* pcur = rhs.head;
+		while (pcur != nullptr)
+		{
+			PushBack(*(pcur->value));
+			pcur = pcur->next;
+		}
+		size = rhs.size;
+	}
+
+	/***
+	 * Assignment operator for rvalue refs
+	 */
+	List<T> operator=(List<T>&& rhs)
+	{
+		std::swap(head, rhs.head);
+		std::swap(tail, rhs.tail);
+		size = rhs.size;
+	}
+
 	/////
 	//	List Reading Operations
 	/////
 
-	T At(SizeT index) {
+	/***
+	 * Getter for size of list
+	 */
+	SizeT Size()
+	{
+		return size;
+	}
+
+	/***
+	 * Retrieves a copy of the element at the given index
+	 *	Allows read and write of the returned element
+	 *	- Does not currently handle exceptions for out of range access
+	 */
+	T& At(SizeT index) {
 		Node<T>* curr = head;
 
 		for (SizeT i = 0; i < index; ++i)
 		{
 			// ? what happens if the index is out of range
+			//	Could just ignore the exception for now, let it get passed up to the caller
 			// [TODO] add iterator types
 	
 			curr = curr->next;
@@ -266,32 +303,5 @@ public:
 		}
 	}
 
-	//T pop_front();
-	//List<T> pop_front(unsigned count);
-	//
-	//T pop_back();
-	//List<T> pop_back(unsigned count);
-	//
-	//void insert(const List<T>& rhs, unsigned index);
-	//void insert(List<T> rhs, unsigned index);
-	//
-	//// Operator overloading for convenient operations
-	//List<T>& operator=(const List<T>& rhs);
-	//List<T>& operator+=(const List<T>& rhs);
-	//List<T>& operator>>=(List<T>& rhs) const;
-	//List<T>& operator<<=(const List<T>& rhs);
-	//
-	//List<T> operator+(const List<T>& rhs) const;
-	//List<T> operator>>(const List<T>& rhs) const;
-	//List<T> operator<<(const List<T>& rhs) const;
-	//
-	//// [NOTE] conversions ctor means that single T values will use non-ref versions
-	//List<T>& operator=(List<T> rhs);
-	//List<T>& operator+=(List<T> rhs);
-	//List<T> operator>>=(List<T> rhs) const;
-	//List<T>& operator<<=(List<T> rhs);
-	//
-	//List<T> operator+(List<T> rhs) const;
-	//List<T> operator>>(List<T> rhs) const;
-	//List<T> operator<<(List<T> rhs) const;
+	
 };
