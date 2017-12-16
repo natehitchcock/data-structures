@@ -9,8 +9,7 @@
 // [TODO] handle generic iteration
 // [TODO] evaluate using smart pointers instead of raw pointers
 // [TODO] support for range-based for loop!
-// [TODO] replace size type with template parameter to allow for larger sizes
-template<typename T>
+template<typename T, typename SizeT = int>
 class List
 {
 	template<typename U>
@@ -30,7 +29,7 @@ class List
 
 	Node<T>* head;
 	Node<T>* tail;
-	int size;
+	SizeT size;
 
 public:
     /***
@@ -106,11 +105,33 @@ public:
 		tail = nullptr;
 	}
 
-	int Size() 
+	SizeT Size()
 	{
 		return size;
 	}
-  
+	
+	/////
+	//	List Reading Operations
+	/////
+
+	T At(SizeT index) {
+		Node<T>* curr = head;
+
+		for (SizeT i = 0; i < index; ++i)
+		{
+			// ? what happens if the index is out of range
+			// [TODO] add iterator types
+	
+			curr = curr->next;
+		}
+
+		return *(curr->value);
+	}
+
+	/////
+	//	List Modifying Operations
+	/////
+
 	/***
      * Copies a value and adds it to the front of the list
      */
@@ -133,6 +154,47 @@ public:
 
 		head = newNode;
 		++size;
+	}
+
+	/***
+	* Copies a list and adds it to the front of the list
+	*/
+	void PushFront(const List<T>& other)
+	{
+		Node<T>* curr = other.tail;
+
+		while (curr != nullptr)
+		{
+			PushFront(*(curr->value));
+			curr = curr->prev;
+		}
+	}
+
+	/***
+	* Copies a list and adds it to the front of the list
+	*/
+	void PushFront(const List<T>&& other)
+	{
+		// If the other list is empty, just bailout
+		if (other->tail == nullptr)
+			return;
+
+		if (head == nullptr)
+		{
+			std::swap(head, other.head);
+			std::swap(tail, other.tail);
+			std::swap(size, other.size);
+		}
+		else
+		{
+			head->prev = other.tail;
+			other.tail->next = head;
+
+			head = other.head;
+
+			other.head = nullptr;
+			other.tail = nullptr;
+		}
 	}
   
     /***
@@ -161,6 +223,47 @@ public:
 
 		tail = newNode;
 		++size;
+	}
+
+	/***
+	* Copies a list and adds it to the end of the list
+	*/
+	void PushBack(const List<T>& other)
+	{
+		Node<T>* curr = other.head;
+
+		while (curr != nullptr)
+		{
+			PushBack(*(curr->value));
+			curr = curr->next;
+		}
+	}
+
+	/***
+	* Moves a list to the end of the list
+	*/
+	void PushBack(const List<T>&& other)
+	{
+		// If other list is empty, bailout
+		if (other->head == nullptr)
+			return;
+
+		if (tail == nullptr)
+		{
+			std::swap(head, other.head);
+			std::swap(tail, other.tail);
+			std::swap(size, other.size);
+		} 
+		else
+		{
+			tail->next = other.head;
+			other.head->prev = tail;
+
+			tail = other.tail;
+
+			other.head = nullptr;
+			other.tail = nullptr;
+		}
 	}
 
 	//T pop_front();
