@@ -467,20 +467,79 @@ public:
 	//	current implementation leaves a lot to be desired
 	void Insert(T element, SizeT index)
 	{
-		// unimplemented
-		return;
+		if (index == size)
+		{
+			PushBack(element);
+			return;
+		}
+		else if (index == 0)
+		{
+			PushFront(element);
+			return;
+		}
+
+		// [TODO] encapsulate resource mgmt in case of exception
+		Node<T>* newNode = new Node<T>();
+		newNode->value = new T(element);
+
+		// The insertion point is somewhere in the body of the list
+		Node<T>* curr = head;
+		for (SizeT i = 0; i < index; ++i)
+		{
+			curr = curr->next;
+		}
+
+		curr->prev->next = newNode;
+		newNode->prev = curr->prev;
+		newNode->next = curr;
+		curr->prev = newNode;
+
+		++size;
 	}
 
 	/***
 	 * Inserts a list into the list, copying every item
-	 *	element is a shallow copy of the list
+	 *	list is the list to insert, by copy
 	 *	index must be [0, list.Size()]
 	 */
 	// [NOTE] could use a move version
-	void Insert(ListT element, SizeT index)
+	void Insert(ListT list, SizeT index)
 	{
-		// unimplemented
-		return;
+		if (index == size)
+		{
+			PushBack(list);
+			return;
+		}
+		else if (index == 0)
+		{
+			PushFront(list);
+			return;
+		}
+
+		Node<T>* curr = head;
+		for (SizeT i = 0; i < index; ++i)
+		{
+			curr = curr->next;
+		}
+		Node<T>* before = curr->prev;
+
+		Node<T>* otherCurr = list.head;
+		for (SizeT i = 0; i < list.size; ++i)
+		{
+			Node<T>* newNode = new Node<T>();
+			newNode->value = new T(*(otherCurr->value));
+
+			before->next = newNode;
+			newNode->prev = before;
+			before = newNode;
+
+			otherCurr = otherCurr->next;
+		}
+
+		size += list.size;
+
+		curr->prev = before;
+		before->next = curr;
 	}
 
 	/***
@@ -490,7 +549,47 @@ public:
 	 */
 	ListT Slice(SizeT start, SizeT count)
 	{
-		// unimplemented
-		return ListT();
+		Node<T>* newListHead = head;
+		for (SizeT i = 0; i < start; ++i)
+		{
+			newListHead = newListHead->next;
+		}
+
+		// [TODO] remove redundant iteration
+		Node<T>* newListTail = newListHead;
+		for (SizeT i = 0; i < count - 1; ++i)
+		{
+			newListTail = newListTail->next;
+		}
+
+		if (newListHead == head)
+		{
+			head = newListTail->next;
+		}
+		else
+		{
+			newListHead->prev->next = newListTail->next;
+		}
+
+		if (newListTail == tail)
+		{
+			tail = newListHead->prev;
+		}
+		else
+		{
+			newListTail->next->prev = newListHead->prev;
+		}
+
+		newListHead->prev = nullptr;
+		newListTail->next = nullptr;
+
+		ListT newList;
+		newList.head = newListHead;
+		newList.tail = newListTail;
+		newList.size = count;
+
+		size -= count;
+
+		return newList;
 	}
 };
