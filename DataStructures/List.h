@@ -62,7 +62,10 @@ public:
     /***
      * Initializer list ctor
      */
-	List(std::initializer_list<T> args)
+	List(std::initializer_list<T> args):
+		head(nullptr),
+		tail(nullptr),
+		size(0)
 	{
 		// ? Would it be faster/better to just hang on to the initializer list
 		//	until we need to modify it? (copy on write)
@@ -80,7 +83,10 @@ public:
     /***
      * Copy ctor
      */
-	List(const ListT& rhs)
+	List(const ListT& rhs) :
+		head(nullptr),
+		tail(nullptr),
+		size(0)
 	{
 		// ? what happens if we throw an exception (like OOM) in here
 		Node<T>* pcur = rhs.head;
@@ -95,11 +101,14 @@ public:
     /***
      * Move ctor
      */
-	List(ListT&& rhs)
+	List(ListT&& rhs) :
+		head(nullptr),
+		tail(nullptr),
+		size(0)
 	{
 		std::swap(head, rhs.head);
 		std::swap(tail, rhs.tail);
-		size = rhs.size;
+		std::swap(size, rhs.size);
 	}
     
     /***
@@ -335,6 +344,7 @@ public:
 		T ret = *(head->value);
 		Node<T>* oldHead = head;
 		head = head->next;
+		head->prev = nullptr;
 
 		if (oldHead == tail)
 		{
@@ -344,6 +354,7 @@ public:
 		delete oldHead->value;
 		delete oldHead;
 
+		--size;
 		return ret;
 	}
 
@@ -353,10 +364,12 @@ public:
 	 */
 	ListT PopFront(SizeT count)
 	{
+		if (count <= 0) return ListT();
+
 		Node<T>* oldHead = head;
 		Node<T>* curr = oldHead;
 
-		for (SizeT i = 0; i < count; ++i)
+		for (SizeT i = 0; i < count - 1; ++i)
 		{
 			// If we try to pop more than the list has, exception will occur
 			curr = curr->next;
@@ -366,6 +379,7 @@ public:
 		ListT newList;
 		newList.head = oldHead;
 		newList.tail = curr;
+		newList.size = count;
 
 		// Update the current list head and tail
 		head = curr->next;
@@ -378,6 +392,8 @@ public:
 		// Finish severing the new list from the old
 		curr->next = nullptr;
 
+		size -= count;
+
 		return newList;
 	}
 
@@ -389,6 +405,7 @@ public:
 		T ret = *(tail->value);
 		Node<T>* oldTail = tail;
 		tail = tail->prev;
+		tail->next = nullptr;
 
 		if (oldTail == head)
 		{
@@ -397,6 +414,8 @@ public:
 
 		delete oldTail->value;
 		delete oldTail;
+
+		--size;
 
 		return ret;
 	}
@@ -407,10 +426,11 @@ public:
 	 */
 	ListT PopBack(SizeT count)
 	{
+		if (count <= 0) return ListT();
 		Node<T>* oldTail = tail;
 		Node<T>* curr = oldTail;
 
-		for (SizeT i = 0; i < count; ++i)
+		for (SizeT i = 0; i < count - 1; ++i)
 		{
 			// If we try to pop more than the list has, exception will occur
 			curr = curr->prev;
@@ -420,6 +440,7 @@ public:
 		ListT newList;
 		newList.head = curr;
 		newList.tail = oldTail;
+		newList.size = count;
 
 		// Update the current list head and tail
 		tail = curr->prev;
@@ -431,6 +452,8 @@ public:
 
 		// Finish severing the new list from the old
 		curr->prev = nullptr;
+
+		size -= count;
 
 		return newList;
 	}
