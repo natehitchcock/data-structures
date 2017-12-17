@@ -5,6 +5,18 @@
 
 #include <initializer_list>
 
+// [NOTE] There is a lot of redundancy with a doubly linked list, specifically
+//	with the directionality of an operation (pushFRONT vs pushBACK).
+//	I wonder if there is a better way to write this that re-uses some code
+//	between those operations. Maybe the solution is generalizing iteration?
+//	Maybe generalizing list operations to node operations?
+
+// [NOTE] There is also redundancy with functions that take a single item and
+//	a list of items. A conversion ctor from T -> ListT would solve this,
+//	removing the need for functions that take a single item in lieu of their
+//	list-taking counterparts
+
+
 // [TODO] handle custom allocator
 // [TODO] handle generic iteration
 // [TODO] evaluate using smart pointers instead of raw pointers
@@ -33,6 +45,9 @@ class List
 	SizeT size;
 
 public:
+	// ? is typedef better, or alias?
+	typedef List<T, SizeT> ListT;
+
     /***
      * Default ctor
      */
@@ -65,7 +80,7 @@ public:
     /***
      * Copy ctor
      */
-	List(const List<T>& rhs)
+	List(const ListT& rhs)
 	{
 		// ? what happens if we throw an exception (like OOM) in here
 		Node<T>* pcur = rhs.head;
@@ -80,7 +95,7 @@ public:
     /***
      * Move ctor
      */
-	List(List<T>&& rhs)
+	List(ListT&& rhs)
 	{
 		std::swap(head, rhs.head);
 		std::swap(tail, rhs.tail);
@@ -106,13 +121,12 @@ public:
 		tail = nullptr;
 	}
 	
-	// [TODO] alias away List<T> to avoid defaulting SizeT on passed back types
 	// [TODO] replace copy/move ctor with perfect-forwarded ctor that uses
 	//	the assigment operator
 	/***
 	 * Assignment operator for lvalue refs
 	 */
-	List<T> operator=(const List<T>& rhs)
+	ListT& operator=(const ListT& rhs)
 	{
 		Node<T>* pcur = rhs.head;
 		while (pcur != nullptr)
@@ -121,16 +135,20 @@ public:
 			pcur = pcur->next;
 		}
 		size = rhs.size;
+
+		return *this;
 	}
 
 	/***
 	 * Assignment operator for rvalue refs
 	 */
-	List<T> operator=(List<T>&& rhs)
+	ListT& operator=(ListT&& rhs)
 	{
 		std::swap(head, rhs.head);
 		std::swap(tail, rhs.tail);
 		size = rhs.size;
+
+		return *this;
 	}
 
 	/////
@@ -196,7 +214,7 @@ public:
 	/***
 	* Copies a list and adds it to the front of the list
 	*/
-	void PushFront(const List<T>& other)
+	void PushFront(const ListT& other)
 	{
 		Node<T>* curr = other.tail;
 
@@ -210,7 +228,7 @@ public:
 	/***
 	* Copies a list and adds it to the front of the list
 	*/
-	void PushFront(List<T>&& other)
+	void PushFront(ListT&& other)
 	{
 		// If the other list is empty, just bailout
 		if (other.tail == nullptr)
@@ -265,7 +283,7 @@ public:
 	/***
 	* Copies a list and adds it to the end of the list
 	*/
-	void PushBack(const List<T>& other)
+	void PushBack(const ListT& other)
 	{
 		Node<T>* curr = other.head;
 
@@ -279,7 +297,7 @@ public:
 	/***
 	* Moves a list to the end of the list
 	*/
-	void PushBack(List<T>&& other)
+	void PushBack(ListT&& other)
 	{
 		// If other list is empty, bailout
 		if (other.head == nullptr)
@@ -303,5 +321,153 @@ public:
 		}
 	}
 
-	
+	/***
+	 * Removes the front element from the list and returns a copy
+	 */
+	T PopFront() 
+	{
+		// ? what happens on an empty list?
+		//	maybe a wrapper class could be useful here, to avoid copying
+		//	and allow special return values (like 'none')
+		// ? what would std::vector do (WWSVD, kind of a mantra at this point)
+
+		// For now, allow exception to be passed up when operating on an empty list
+		T ret = *(head->value);
+		Node<T>* oldHead = head;
+		head = head->next;
+
+		if (oldHead == tail)
+		{
+			tail = tail->next;
+		}
+
+		delete oldHead->value;
+		delete oldHead;
+
+		return ret;
+	}
+
+	/***
+	 * Removes a sublist from the front of the list
+	 *	count must be positive
+	 */
+	ListT PopFront(SizeT count)
+	{
+		Node<T>* oldHead = head;
+		Node<T>* curr = oldHead;
+
+		for (SizeT i = 0; i < count; ++i)
+		{
+			// If we try to pop more than the list has, exception will occur
+			curr = curr->next;
+		}
+
+		// Make the new list
+		ListT newList;
+		newList.head = oldHead;
+		newList.tail = curr;
+
+		// Update the current list head and tail
+		head = curr->next;
+		head->prev = nullptr;
+		if (curr == tail)
+		{
+			tail = tail->next;
+		}
+		
+		// Finish severing the new list from the old
+		curr->next = nullptr;
+
+		return newList;
+	}
+
+	/***
+	 * Removes the last item in the list and returns a copy of it
+	 */
+	T PopBack()
+	{
+		T ret = *(tail->value);
+		Node<T>* oldTail = tail;
+		tail = tail->prev;
+
+		if (oldTail == head)
+		{
+			head = head->prev;// nullptr op, guaranteed
+		}
+
+		delete oldTail->value;
+		delete oldTail;
+
+		return ret;
+	}
+
+	/***
+	 * Removes a sublist from the back of the list
+	 *	count must be positive
+	 */
+	ListT PopBack(SizeT count)
+	{
+		Node<T>* oldTail = tail;
+		Node<T>* curr = oldTail;
+
+		for (SizeT i = 0; i < count; ++i)
+		{
+			// If we try to pop more than the list has, exception will occur
+			curr = curr->prev;
+		}
+
+		// Make the new list
+		ListT newList;
+		newList.head = curr;
+		newList.tail = oldTail;
+
+		// Update the current list head and tail
+		tail = curr->prev;
+		tail->next = nullptr;
+		if (curr == head)
+		{
+			head = head->prev;
+		}
+
+		// Finish severing the new list from the old
+		curr->prev = nullptr;
+
+		return newList;
+	}
+
+	/***
+	 * Inserts an element into the list
+	 *	element is a copy of the item
+	 *	index must be between 0 and list size
+	 */
+	// [NOTE] this could be done a lot better with move ction and in-place new
+	//	current implementation leaves a lot to be desired
+	void Insert(T element, SizeT index)
+	{
+		// unimplemented
+		return;
+	}
+
+	/***
+	 * Inserts a list into the list, copying every item
+	 *	element is a shallow copy of the list
+	 *	index must be [0, list.Size()]
+	 */
+	// [NOTE] could use a move version
+	void Insert(ListT element, SizeT index)
+	{
+		// unimplemented
+		return;
+	}
+
+	/***
+	 * Removes a sublist from the list and returns it
+	 *	start must be [0, list.Size()]
+	 *	count must be [0, list.Size() - start]
+	 */
+	ListT Slice(SizeT start, SizeT count)
+	{
+		// unimplemented
+		return ListT();
+	}
 };
