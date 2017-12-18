@@ -22,6 +22,7 @@
 // [TODO] evaluate using smart pointers instead of raw pointers
 // [TODO] support for range-based for loop!
 // [TODO] const correctness pass
+// [TODO] emplacement would be cool
 template<typename T, typename SizeT = int>
 class List
 {
